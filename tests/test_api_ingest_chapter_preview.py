@@ -105,6 +105,48 @@ def test_chapter_preview_ignores_embedded_chapter_references():
     assert "原书第十八章" in data["chapters"][1]["content"]
 
 
+def test_chapter_preview_does_not_split_episode_end_sentence():
+    from novelvideo.api.chapter_preview import build_chapter_preview
+
+    text = "\n".join(
+        [
+            "# 第一集",
+            "开场就是高潮。",
+            "第一集结束。",
+            "---",
+            "# 第二集",
+            "林远回家。",
+        ]
+    )
+
+    data = build_chapter_preview(text)
+
+    assert data["count"] == 2
+    assert [chapter["number"] for chapter in data["chapters"]] == [1, 2]
+    assert "第一集结束。" in data["chapters"][0]["content"]
+
+
+def test_chapter_preview_does_not_split_english_episode_end_sentence():
+    from novelvideo.api.chapter_preview import build_chapter_preview
+
+    text = "\n".join(
+        [
+            "Episode 1: The Reset",
+            "The opening is a shock.",
+            "Episode 1 ends here.",
+            "---",
+            "Episode 2 - Aftermath",
+            "He returns home.",
+        ]
+    )
+
+    data = build_chapter_preview(text)
+
+    assert data["count"] == 2
+    assert [chapter["number"] for chapter in data["chapters"]] == [1, 2]
+    assert "Episode 1 ends here." in data["chapters"][0]["content"]
+
+
 @pytest.mark.asyncio
 async def test_upload_novel_returns_nicegui_chapter_preview(tmp_path, monkeypatch):
     from novelvideo.api.routes import ingest
